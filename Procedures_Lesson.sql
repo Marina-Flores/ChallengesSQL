@@ -241,3 +241,107 @@ AND cu.email LIKE '%' + @email_domain;
 END
 
 EXEC oes.getCustomersByCountryEmail @country = 'Australia', @email_domain = '@gmail.com';
+
+SELECT 
+	employee_id,
+	first_name,
+	last_name,
+	department_id,
+	salary
+FROM
+	hcm.employees
+WHERE 
+	salary >= 80000
+AND salary <= 100000;
+
+CREATE PROCEDURE hcm.getEmployeesBySalaryRange
+(
+	@min_salary DECIMAL(12,2),
+	@max_salary DECIMAL(12,2)
+)
+AS
+SELECT 
+	employee_id,
+	first_name,
+	last_name,
+	department_id,
+	salary
+FROM
+	hcm.employees
+WHERE 
+	salary >= @min_salary
+AND salary <= @max_salary;
+
+EXEC hcm.getEmployeesBySalaryRange @min_salary = 80000, @max_salary = 100000;
+
+-- optinal parameters
+
+ALTER PROCEDURE hcm.getEmployeesBySalaryRange
+(
+	@min_salary DECIMAL(12,2) = 0,
+	@max_salary DECIMAL(12,2) = 99999999
+)
+AS
+SELECT 
+	employee_id,
+	first_name,
+	last_name,
+	department_id,
+	salary
+FROM
+	hcm.employees
+WHERE 
+	salary >= @min_salary
+AND salary <= @max_salary;
+
+-- select employees between default salary range i.e. @min_salary=0 and @max_salary=99999999:
+EXEC hcm.getEmployeesBySalaryRange
+
+-- select employees with min salary of 90000 and default max salary:
+EXEC hcm.getEmployeesBySalaryRange @min_salary = 90000
+
+-- select employees with max salary of 150000 and default min salary:
+EXEC hcm.getEmployeesBySalaryRange @max_salary = 150000
+
+-- output parameters
+
+SELECT * FROM dbo.parks2;
+
+CREATE PROCEDURE dbo.addNewPark
+(
+	@park_name VARCHAR(50),
+	@entry_free DECIMAL(6,2) = 0,
+	@new_park_id INT OUT
+)
+AS
+
+-- setting the NOCOUNT option to ON means that SQL won't show messages reporting how many rows were affected by DML statements
+SET NOCOUNT ON;
+
+-- if XACT_ABORT setting is OFF then not all run-time errors will cause the transaction to rollback.
+-- by setting XACT_ABORT setting ON then all errors will cause the transaction to rollback and execution of the code to abort:
+
+SET XACT_ABORT ON;
+
+BEGIN
+
+INSERT INTO dbo.parks2 (park_name, entry_free)
+	VALUES (@park_name, @entry_free);
+
+-- setting the @new_park_id output parameter to the value returned by the SCOPE_IDENTITY function
+-- SCOPE_IDENTITY() returns the IDENTITY value of the last insert that ocurred in the same scope
+
+SELECT @new_park_id = SCOPE_IDENTITY();
+
+END
+
+-- to execute a stored procedure with an output parameter(s), we must 
+-- declare a variable to store the value returned by the output parameter: 
+
+DECLARE @ParkID INT;
+
+EXEC dbo.addNewPark @park_name = 'Green Meadows 2', @entry_free = 6, @new_park_id = @ParkID OUT;
+
+SELECT @ParkID; 
+
+select * from dbo.parks2
